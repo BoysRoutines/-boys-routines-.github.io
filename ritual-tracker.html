@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Ritual</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&family=Cormorant+Garamond:ital,wght@0,300;1,300;1,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0e0c0a;
+    --surface: #161310;
+    --surface2: #1e1a16;
+    --border: #2e2820;
+    --accent: #c8a96e;
+    --accent2: #8faa8b;
+    --accent3: #b07a7a;
+    --text: #e8e0d4;
+    --muted: #7a6e60;
+    --glow: rgba(200,169,110,0.15);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Noise texture overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.6;
+  }
+
+  /* Ambient orbs */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orb-1 { width: 400px; height: 400px; background: rgba(200,169,110,0.06); top: -100px; right: -100px; }
+  .orb-2 { width: 300px; height: 300px; background: rgba(143,170,139,0.05); bottom: 20%; left: -80px; }
+  .orb-3 { width: 200px; height: 200px; background: rgba(176,122,122,0.05); bottom: 5%; right: 10%; }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+
+  .logo-mark {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0.8;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(42px, 8vw, 72px);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .tagline {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 16px;
+  }
+
+  /* Credits bar */
+  .credits-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 32px 0;
+    padding: 16px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .credits-bar::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+  }
+
+  .credits-label {
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .credits-count {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    color: var(--accent);
+    line-height: 1;
+    font-weight: 700;
+    transition: transform 0.3s, color 0.3s;
+  }
+
+  .credits-count.bump {
+    transform: scale(1.3);
+    color: #f0d090;
+  }
+
+  .credit-icon { font-size: 18px; }
+
+  .credits-hint {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-left: auto;
+    font-style: italic;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    padding: 14px 24px;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s;
+  }
+
+  .tab::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0; right: 0;
+    height: 1px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transition: transform 0.3s;
+  }
+
+  .tab.active { color: var(--accent); }
+  .tab.active::after { transform: scaleX(1); }
+  .tab:hover { color: var(--text); }
+
+  /* Panels */
+  .panel { display: none; }
+  .panel.active { display: block; animation: fadeUp 0.4s ease; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Section headers */
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 400;
+    font-style: italic;
+  }
+
+  .section-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .section-cost {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    background: rgba(200,169,110,0.1);
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  /* Add step form */
+  .add-form {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .add-form input, .add-form select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 10px 14px;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .add-form input:focus, .add-form select:focus {
+    border-color: var(--accent);
+  }
+
+  .add-form input { flex: 1; min-width: 180px; }
+
+  select option { background: #1e1a16; }
+
+  .btn {
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 10px 20px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn:hover { background: var(--accent); color: var(--bg); }
+
+  .btn-secondary {
+    border-color: var(--border);
+    color: var(--muted);
+  }
+
+  .btn-secondary:hover { border-color: var(--muted); background: none; color: var(--text); }
+
+  .btn-green { border-color: var(--accent2); color: var(--accent2); }
+  .btn-green:hover { background: var(--accent2); color: var(--bg); }
+
+  .btn-red { border-color: var(--accent3); color: var(--accent3); }
+  .btn-red:hover { background: var(--accent3); color: var(--bg); }
+
+  /* Step cards */
+  .steps-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 32px; }
+
+  .step-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .step-card.done {
+    background: rgba(143,170,139,0.06);
+    border-color: rgba(143,170,139,0.3);
+  }
+
+  .step-card.done::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent2);
+  }
+
+  .step-check {
+    width: 22px; height: 22px;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-size: 12px;
+    transition: all 0.2s;
+    background: none;
+  }
+
+  .step-check:hover { border-color: var(--accent2); }
+  .step-check.checked { background: var(--accent2); border-color: var(--accent2); }
+
+  .step-name {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+
+  .step-card.done .step-name { color: var(--accent2); }
+
+  .step-category {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 20px;
+    background: var(--surface2);
+    color: var(--muted);
+  }
+
+  .step-category.skin { background: rgba(176,122,122,0.15); color: var(--accent3); }
+  .step-category.workout { background: rgba(143,170,139,0.15); color: var(--accent2); }
+  .step-category.mind { background: rgba(200,169,110,0.15); color: var(--accent); }
+
+  .step-del {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 2px 4px;
+    transition: color 0.2s;
+  }
+
+  .step-del:hover { color: var(--accent3); }
+
+  .credit-reward {
+    font-size: 10px;
+    color: var(--accent);
+    background: rgba(200,169,110,0.1);
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    border: 1px dashed var(--border);
+    border-radius: 2px;
+  }
+
+  /* Modifications shop */
+  .shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 8px;
+  }
+
+  .mod-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .mod-card:hover { border-color: var(--accent); }
+
+  .mod-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--glow);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+
+  .mod-card:hover::after { opacity: 1; }
+
+  .mod-cost {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .mod-cost span { font-size: 12px; font-family: 'DM Mono', monospace; }
+
+  .mod-title {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+
+  .mod-desc {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .mod-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .mod-card.locked { opacity: 0.5; }
+  .mod-card.locked:hover { border-color: var(--border); }
+  .mod-card.locked::after { display: none; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    color: var(--text);
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    padding: 12px 24px;
+    border-radius: 2px;
+    z-index: 9999;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* Reset streak */
+  .streak-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    margin-bottom: 24px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .streak-dots {
+    display: flex;
+    gap: 5px;
+    margin-left: auto;
+  }
+
+  .streak-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+
+  .streak-dot.filled { background: var(--accent); }
+
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .progress-bar {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent2);
+    border-radius: 2px;
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Daily reset note */
+  .daily-note {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-align: center;
+    margin-top: 40px;
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+  }
+
+  /* Confetti burst */
+  @keyframes floatUp {
+    from { transform: translateY(0) rotate(0deg); opacity: 1; }
+    to { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+  }
+
+  .confetti-piece {
+    position: fixed;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    animation: floatUp 1s ease forwards;
+  }
+
+  /* Modify step modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal {
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    padding: 32px;
+    width: 90%;
+    max-width: 460px;
+    position: relative;
+  }
+
+  .modal h3 {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 22px;
+    margin-bottom: 20px;
+    color: var(--accent);
+  }
+
+  .modal input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 12px 14px;
+    border-radius: 2px;
+    outline: none;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+
+  .modal input:focus { border-color: var(--accent); }
+
+  .modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: none; border: none;
+    color: var(--muted); font-size: 20px;
+    cursor: pointer;
+  }
+
+  .modal-close:hover { color: var(--text); }
+
+  @media (max-width: 600px) {
+    .add-form { flex-direction: column; }
+    .credits-hint { display: none; }
+    .shop-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<div class="container">
+  <header>
+    <div class="logo-mark">✦ Your Daily Practice ✦</div>
+    <h1>The <em>Ritual</em></h1>
+    <p class="tagline">Build consistency · Earn freedom · Evolve with intention</p>
+  </header>
+
+  <!-- Credits bar -->
+  <div class="credits-bar">
+    <span class="credit-icon">◈</span>
+    <div>
+      <div class="credits-label">Available Credits</div>
+      <div class="credits-count" id="creditCount">0</div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="credits-hint">Complete steps to earn • Spend to modify your ritual</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('today')">Today's Ritual</button>
+    <button class="tab" onclick="switchTab('build')">Build Routine</button>
+    <button class="tab" onclick="switchTab('modify')">Modify ◈</button>
+  </div>
+
+  <!-- TODAY PANEL -->
+  <div class="panel active" id="panel-today">
+    <div class="streak-bar">
+      <span>🔥 Day streak</span>
+      <strong id="streakCount" style="color:var(--accent)">0</strong>
+      <div class="streak-dots" id="streakDots"></div>
+    </div>
+
+    <div class="progress-row">
+      <span id="progressText">0 / 0 completed</span>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+      <span id="progressPct">0%</span>
+    </div>
+
+    <!-- Skincare -->
+    <div class="section-head">
+      <div class="section-title" style="color:var(--accent3)">Skincare</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="steps-list" id="today-skin"></div>
+
+    <!-- Workout -->
+    <div class="section-head">
+      <div class="section-title" style="color:var(--accent2)">Workout</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="steps-list" id="today-workout"></div>
+
+    <!-- Mind -->
+    <div class="section-head">
+      <div class="section-title" style="color:var(--accent)">Mindfulness</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="steps-list" id="today-mind"></div>
+
+    <div class="daily-note">
+      Each step you complete earns you a ritual credit — a permission slip to evolve your practice.
+    </div>
+  </div>
+
+  <!-- BUILD PANEL -->
+  <div class="panel" id="panel-build">
+    <div class="section-head">
+      <div class="section-title">Add a New Step</div>
+      <div class="section-line"></div>
+    </div>
+
+    <div class="add-form">
+      <input type="text" id="newStepName" placeholder="e.g. Vitamin C serum, 10 min yoga..." maxlength="60">
+      <select id="newStepCategory">
+        <option value="skin">Skincare</option>
+        <option value="workout">Workout</option>
+        <option value="mind">Mindfulness</option>
+      </select>
+      <select id="newStepCredits">
+        <option value="1">+1 credit</option>
+        <option value="2">+2 credits</option>
+        <option value="3">+3 credits</option>
+      </select>
+      <button class="btn" onclick="addStep()">+ Add</button>
+    </div>
+
+    <div class="section-head">
+      <div class="section-title" style="color:var(--accent3)">Skincare Steps</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="steps-list" id="build-skin"></div>
+
+    <div class="section-head" style="margin-top:24px">
+      <div class="section-title" style="color:var(--accent2)">Workout Steps</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="steps-list" id="build-workout"></div>
+
+    <div class="section-head" style="margin-top:24px">
+      <div class="section-title" style="color:var(--accent)">Mindfulness Steps</div>
+      <div class="section-line"></div>
+    </div>
+    <div class="steps-list" id="build-mind"></div>
+  </div>
+
+  <!-- MODIFY PANEL -->
+  <div class="panel" id="panel-modify">
+    <div style="font-size:11px; color:var(--muted); letter-spacing:0.2em; margin-bottom:28px; line-height:1.8">
+      SPEND CREDITS TO ADJUST YOUR RITUAL · CONSISTENCY EARNS FLEXIBILITY
+    </div>
+
+    <div class="shop-grid">
+      <!-- Swap a step -->
+      <div class="mod-card" id="mod-swap">
+        <div class="mod-cost">3 <span>credits</span></div>
+        <div class="mod-title">Swap a Step</div>
+        <div class="mod-desc">Replace any existing routine step with a new one. Keep the category, change the practice.</div>
+        <button class="btn mod-btn" onclick="openSwap()">Swap Step</button>
+      </div>
+
+      <!-- Add a bonus step -->
+      <div class="mod-card" id="mod-add">
+        <div class="mod-cost">2 <span>credits</span></div>
+        <div class="mod-title">Add a Bonus Step</div>
+        <div class="mod-desc">Feeling inspired? Add an extra step to today's ritual without touching your core routine.</div>
+        <button class="btn mod-btn btn-green" onclick="openAddBonus()">Add Bonus</button>
+      </div>
+
+      <!-- Skip a step today -->
+      <div class="mod-card" id="mod-skip">
+        <div class="mod-cost">1 <span>credit</span></div>
+        <div class="mod-title">Grace Pass</div>
+        <div class="mod-desc">Mark one step as gracefully skipped today. It won't affect your credit earnings for the session.</div>
+        <button class="btn mod-btn btn-red" onclick="openSkip()">Use Pass</button>
+      </div>
+
+      <!-- Reorder steps -->
+      <div class="mod-card" id="mod-reorder">
+        <div class="mod-cost">2 <span>credits</span></div>
+        <div class="mod-title">Reorder Your Ritual</div>
+        <div class="mod-desc">Rearrange the order of steps in any category. Sometimes a different flow changes everything.</div>
+        <button class="btn mod-btn" onclick="spendCredits(2, 'reorder')">Shuffle Order</button>
+      </div>
+
+      <!-- Rest day -->
+      <div class="mod-card" id="mod-rest">
+        <div class="mod-cost">5 <span>credits</span></div>
+        <div class="mod-title">Rest Day Pass</div>
+        <div class="mod-desc">Declare today a mindful rest day. Your streak is protected and no steps are required.</div>
+        <button class="btn mod-btn" onclick="spendCredits(5, 'rest')">Take Rest Day</button>
+      </div>
+
+      <!-- Rename a step -->
+      <div class="mod-card" id="mod-rename">
+        <div class="mod-cost">1 <span>credit</span></div>
+        <div class="mod-title">Rename a Step</div>
+        <div class="mod-desc">Update the name of any step — a new product, a refined description, a fresh perspective.</div>
+        <button class="btn mod-btn btn-secondary" onclick="openRename()">Rename Step</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODALS -->
+<div id="modalOverlay" class="modal-overlay" style="display:none" onclick="closeModal(event)">
+  <div class="modal" id="modalBox">
+    <button class="modal-close" onclick="closeModal(null, true)">✕</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let state = {
+  credits: 0,
+  streak: 0,
+  steps: [],           // {id, name, category, creditValue, isBonus}
+  todayChecked: {},    // {id: true/false}
+  todayDate: null,
+  bonusSteps: [],      // added via shop, only for today
+  graceSkips: [],      // step ids skipped gracefully
+  restDay: false
+};
+
+function save() {
+  localStorage.setItem('ritual_state', JSON.stringify(state));
+}
+
+function load() {
+  const raw = localStorage.getItem('ritual_state');
+  if (raw) {
+    try { state = { ...state, ...JSON.parse(raw) }; } catch(e) {}
+  }
+  // Check if it's a new day
+  const today = new Date().toDateString();
+  if (state.todayDate !== today) {
+    // New day: check if yesterday was completed
+    const allIds = [...state.steps.map(s=>s.id), ...state.bonusSteps.map(s=>s.id)];
+    const checkedCount = Object.values(state.todayChecked).filter(Boolean).length;
+    const total = allIds.length;
+    if (total > 0 && checkedCount >= Math.ceil(total * 0.8)) {
+      state.streak = (state.streak || 0) + 1;
+    } else if (state.todayDate !== null && !state.restDay) {
+      state.streak = 0;
+    }
+    state.todayDate = today;
+    state.todayChecked = {};
+    state.bonusSteps = [];
+    state.graceSkips = [];
+    state.restDay = false;
+    save();
+  }
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render() {
+  renderCredits();
+  renderToday();
+  renderBuild();
+  renderStreak();
+}
+
+function renderCredits() {
+  document.getElementById('creditCount').textContent = state.credits;
+}
+
+function renderStreak() {
+  document.getElementById('streakCount').textContent = state.streak;
+  const dots = document.getElementById('streakDots');
+  dots.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d = document.createElement('div');
+    d.className = 'streak-dot' + (i < (state.streak % 7) ? ' filled' : '');
+    dots.appendChild(d);
+  }
+}
+
+function allStepsForToday() {
+  return [...state.steps, ...state.bonusSteps];
+}
+
+function renderToday() {
+  const cats = ['skin', 'workout', 'mind'];
+  const elIds = { skin: 'today-skin', workout: 'today-workout', mind: 'today-mind' };
+  let totalDone = 0, totalAll = 0;
+
+  cats.forEach(cat => {
+    const el = document.getElementById(elIds[cat]);
+    const steps = allStepsForToday().filter(s => s.category === cat);
+    el.innerHTML = '';
+    totalAll += steps.length;
+
+    if (steps.length === 0) {
+      el.innerHTML = '<div class="empty">No steps yet — add some in Build Routine</div>';
+      return;
+    }
+
+    steps.forEach(step => {
+      const checked = state.todayChecked[step.id];
+      const skipped = state.graceSkips.includes(step.id);
+      if (checked) totalDone++;
+      if (skipped && !checked) totalDone++;
+
+      const card = document.createElement('div');
+      card.className = 'step-card' + (checked || skipped ? ' done' : '');
+      card.innerHTML = `
+        <button class="step-check ${checked ? 'checked' : ''}" onclick="toggleCheck('${step.id}', ${step.creditValue})">
+          ${checked ? '✓' : (skipped ? '~' : '')}
+        </button>
+        <div class="step-name">${step.name}${step.isBonus ? ' <span style="font-size:9px;color:var(--accent);margin-left:4px">BONUS</span>' : ''}</div>
+        ${skipped ? '<span style="font-size:10px;color:var(--muted);font-style:italic">grace pass</span>' : ''}
+        <span class="credit-reward">+${step.creditValue} ◈</span>
+      `;
+      el.appendChild(card);
+    });
+  });
+
+  if (state.restDay) {
+    cats.forEach(cat => {
+      document.getElementById(elIds[cat]).innerHTML = '<div class="empty" style="color:var(--accent)">✦ Rest Day — you\'ve earned it ✦</div>';
+    });
+    totalDone = totalAll;
+  }
+
+  const pct = totalAll ? Math.round((totalDone/totalAll)*100) : 0;
+  document.getElementById('progressText').textContent = `${totalDone} / ${totalAll} completed`;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+function renderBuild() {
+  const cats = ['skin', 'workout', 'mind'];
+  const elIds = { skin: 'build-skin', workout: 'build-workout', mind: 'build-mind' };
+
+  cats.forEach(cat => {
+    const el = document.getElementById(elIds[cat]);
+    const steps = state.steps.filter(s => s.category === cat);
+    el.innerHTML = '';
+    if (steps.length === 0) {
+      el.innerHTML = '<div class="empty">No steps — add one above</div>';
+      return;
+    }
+    steps.forEach(step => {
+      const card = document.createElement('div');
+      card.className = 'step-card';
+      card.innerHTML = `
+        <div class="step-check" style="cursor:default">◇</div>
+        <div class="step-name">${step.name}</div>
+        <span class="step-category ${cat}">${cat === 'skin' ? 'Skincare' : cat === 'workout' ? 'Workout' : 'Mind'}</span>
+        <span class="credit-reward">+${step.creditValue} ◈</span>
+        <button class="step-del" onclick="deleteStep('${step.id}')">✕</button>
+      `;
+      el.appendChild(card);
+    });
+  });
+}
+
+// ─── ACTIONS ─────────────────────────────────────────────────────────────────
+function toggleCheck(id, creditValue) {
+  if (state.graceSkips.includes(id)) return;
+  const was = state.todayChecked[id];
+  state.todayChecked[id] = !was;
+  if (!was) {
+    state.credits += creditValue;
+    bumpCredits();
+    spawnConfetti();
+    toast(`+${creditValue} credit${creditValue>1?'s':''} earned ◈`);
+  } else {
+    state.credits = Math.max(0, state.credits - creditValue);
+  }
+  save();
+  render();
+}
+
+function addStep() {
+  const name = document.getElementById('newStepName').value.trim();
+  const category = document.getElementById('newStepCategory').value;
+  const creditValue = parseInt(document.getElementById('newStepCredits').value);
+  if (!name) return toast('Please enter a step name');
+  state.steps.push({ id: Date.now().toString(), name, category, creditValue, isBonus: false });
+  document.getElementById('newStepName').value = '';
+  save();
+  render();
+  toast('Step added to your ritual ✦');
+}
+
+function deleteStep(id) {
+  state.steps = state.steps.filter(s => s.id !== id);
+  delete state.todayChecked[id];
+  save();
+  render();
+}
+
+function bumpCredits() {
+  const el = document.getElementById('creditCount');
+  el.classList.add('bump');
+  setTimeout(() => el.classList.remove('bump'), 400);
+}
+
+function spendCredits(amount, action) {
+  if (state.credits < amount) {
+    return toast(`Not enough credits — need ${amount} ◈`);
+  }
+  if (action === 'reorder') {
+    state.credits -= amount;
+    // Shuffle steps within each category
+    ['skin','workout','mind'].forEach(cat => {
+      const catSteps = state.steps.filter(s => s.category === cat);
+      for (let i = catSteps.length-1; i > 0; i--) {
+        const j = Math.floor(Math.random()*(i+1));
+        [catSteps[i], catSteps[j]] = [catSteps[j], catSteps[i]];
+      }
+      state.steps = [...state.steps.filter(s=>s.category!==cat), ...catSteps];
+    });
+    save(); render();
+    toast('Ritual reordered ✦');
+  } else if (action === 'rest') {
+    state.credits -= amount;
+    state.restDay = true;
+    state.streak = (state.streak || 0) + 1;
+    save(); render();
+    toast('Rest day declared — streak protected ✦');
+    switchTab('today');
+  }
+}
+
+// ─── MODAL ACTIONS ────────────────────────────────────────────────────────────
+function openModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').style.display = 'flex';
+}
+
+function closeModal(e, force) {
+  if (force || (e && e.target === document.getElementById('modalOverlay'))) {
+    document.getElementById('modalOverlay').style.display = 'none';
+  }
+}
+
+function openSwap() {
+  if (state.credits < 3) return toast('Need 3 ◈ credits to swap a step');
+  const opts = state.steps.map(s => `<option value="${s.id}">${s.name} (${s.category})</option>`).join('');
+  if (!opts) return toast('No steps to swap yet');
+  openModal(`
+    <h3>Swap a Step</h3>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:16px;letter-spacing:0.1em">Costs 3 ◈ credits</p>
+    <label style="font-size:11px;color:var(--muted);letter-spacing:0.2em;display:block;margin-bottom:6px">STEP TO REPLACE</label>
+    <select id="swapOldId" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:10px 14px;border-radius:2px;outline:none;margin-bottom:12px">${opts}</select>
+    <label style="font-size:11px;color:var(--muted);letter-spacing:0.2em;display:block;margin-bottom:6px">NEW STEP NAME</label>
+    <input type="text" id="swapNewName" placeholder="New step name..." maxlength="60">
+    <div class="modal-actions">
+      <button class="btn" onclick="doSwap()" style="flex:1">Confirm Swap (3 ◈)</button>
+      <button class="btn btn-secondary" onclick="closeModal(null,true)">Cancel</button>
+    </div>
+  `);
+}
+
+function doSwap() {
+  const oldId = document.getElementById('swapOldId').value;
+  const newName = document.getElementById('swapNewName').value.trim();
+  if (!newName) return toast('Enter a name for the new step');
+  state.credits -= 3;
+  const step = state.steps.find(s => s.id === oldId);
+  if (step) step.name = newName;
+  delete state.todayChecked[oldId];
+  closeModal(null, true);
+  save(); render();
+  toast('Step swapped ✦');
+}
+
+function openAddBonus() {
+  if (state.credits < 2) return toast('Need 2 ◈ credits to add a bonus step');
+  openModal(`
+    <h3>Add a Bonus Step</h3>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:16px;letter-spacing:0.1em">Costs 2 ◈ · Today only</p>
+    <input type="text" id="bonusName" placeholder="Bonus step name..." maxlength="60">
+    <select id="bonusCat" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:10px 14px;border-radius:2px;outline:none;margin-bottom:12px">
+      <option value="skin">Skincare</option>
+      <option value="workout">Workout</option>
+      <option value="mind">Mindfulness</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn btn-green" onclick="doAddBonus()" style="flex:1">Add Bonus (2 ◈)</button>
+      <button class="btn btn-secondary" onclick="closeModal(null,true)">Cancel</button>
+    </div>
+  `);
+}
+
+function doAddBonus() {
+  const name = document.getElementById('bonusName').value.trim();
+  const cat = document.getElementById('bonusCat').value;
+  if (!name) return toast('Enter a name');
+  state.credits -= 2;
+  state.bonusSteps.push({ id: 'bonus_'+Date.now(), name, category: cat, creditValue: 1, isBonus: true });
+  closeModal(null, true);
+  save(); render();
+  toast('Bonus step added for today ✦');
+  switchTab('today');
+}
+
+function openSkip() {
+  if (state.credits < 1) return toast('Need 1 ◈ credit to use a grace pass');
+  const available = allStepsForToday().filter(s => !state.todayChecked[s.id] && !state.graceSkips.includes(s.id));
+  if (!available.length) return toast('No steps left to skip');
+  const opts = available.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  openModal(`
+    <h3>Grace Pass</h3>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:16px;letter-spacing:0.1em">Costs 1 ◈ · Skips one step today</p>
+    <label style="font-size:11px;color:var(--muted);letter-spacing:0.2em;display:block;margin-bottom:6px">STEP TO SKIP</label>
+    <select id="skipId" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:10px 14px;border-radius:2px;outline:none;margin-bottom:12px">${opts}</select>
+    <div class="modal-actions">
+      <button class="btn btn-red" onclick="doSkip()" style="flex:1">Use Grace Pass (1 ◈)</button>
+      <button class="btn btn-secondary" onclick="closeModal(null,true)">Cancel</button>
+    </div>
+  `);
+}
+
+function doSkip() {
+  const id = document.getElementById('skipId').value;
+  state.credits -= 1;
+  state.graceSkips.push(id);
+  closeModal(null, true);
+  save(); render();
+  toast('Grace pass used ✦');
+  switchTab('today');
+}
+
+function openRename() {
+  if (state.credits < 1) return toast('Need 1 ◈ credit to rename a step');
+  const opts = state.steps.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+  if (!opts) return toast('No steps to rename');
+  openModal(`
+    <h3>Rename a Step</h3>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:16px;letter-spacing:0.1em">Costs 1 ◈</p>
+    <select id="renameId" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:10px 14px;border-radius:2px;outline:none;margin-bottom:12px">${opts}</select>
+    <input type="text" id="renameTo" placeholder="New name..." maxlength="60">
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="doRename()" style="flex:1">Rename (1 ◈)</button>
+      <button class="btn btn-secondary" onclick="closeModal(null,true)">Cancel</button>
+    </div>
+  `);
+}
+
+function doRename() {
+  const id = document.getElementById('renameId').value;
+  const name = document.getElementById('renameTo').value.trim();
+  if (!name) return toast('Enter a new name');
+  state.credits -= 1;
+  const step = state.steps.find(s => s.id === id);
+  if (step) step.name = name;
+  closeModal(null, true);
+  save(); render();
+  toast('Step renamed ✦');
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const tabs = ['today','build','modify'];
+    t.classList.toggle('active', tabs[i] === tab);
+  });
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ─── CONFETTI ─────────────────────────────────────────────────────────────────
+function spawnConfetti() {
+  const colors = ['#c8a96e','#8faa8b','#b07a7a','#e8e0d4'];
+  for (let i = 0; i < 8; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = `
+      left: ${20+Math.random()*60}%;
+      bottom: 20%;
+      background: ${colors[Math.floor(Math.random()*colors.length)]};
+      animation-delay: ${Math.random()*0.3}s;
+      animation-duration: ${0.8+Math.random()*0.6}s;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1500);
+  }
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+load();
+render();
+</script>
+</body>
+</html>
